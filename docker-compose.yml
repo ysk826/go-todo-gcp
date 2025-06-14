@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: todo_mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: todoapp
+      MYSQL_USER: todouser
+      MYSQL_PASSWORD: todopassword
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - todo_network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: todo_backend
+    ports:
+      - "8080:8080"
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USER: todouser
+      DB_PASSWORD: todopassword
+      DB_NAME: todoapp
+    depends_on:
+      - mysql
+    networks:
+      - todo_network
+    volumes:
+      - ./backend:/app
+    command: go run main.go
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: todo_frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - REACT_APP_API_URL=http://localhost:8080
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    networks:
+      - todo_network
+
+volumes:
+  mysql_data:
+
+networks:
+  todo_network:
+    driver: bridge
