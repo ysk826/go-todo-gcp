@@ -1,17 +1,16 @@
-FROM node:18-alpine
-
+# frontend/Dockerfile
+FROM node:18-alpine AS builder
 WORKDIR /app
-
-# package.json と package-lock.json をコピー
 COPY package*.json ./
+RUN npm ci
 
-# 依存関係をインストール
-RUN npm install
-
-# ソースコードをコピー
 COPY . .
+# ビルド時に環境変数を設定
+ENV REACT_APP_API_URL=https://todo-backend-751580842556.asia-northeast1.run.app
+RUN npm run build
 
-# 開発サーバーを起動
-EXPOSE 3000
-
-CMD ["npm", "start"]
+FROM nginx:alpine
+COPY --from=builder /app/build /usr/share/nginx/html
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
