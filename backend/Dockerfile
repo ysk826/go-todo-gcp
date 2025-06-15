@@ -9,8 +9,8 @@ RUN go mod download
 # ソースコードをコピー
 COPY . .
 
-# アプリケーションをビルド
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main .
+# Linux AMD64用にクロスコンパイル
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -installsuffix cgo -o main .
 
 # 実行用の軽量イメージ
 FROM alpine:latest
